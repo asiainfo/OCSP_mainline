@@ -1,5 +1,5 @@
 /* jshint indent: 2 */
-
+"use strict";
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('STREAM_DATAINTERFACE', {
     id: {
@@ -33,13 +33,13 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     delim: {
-      type: DataTypes.STRING,
+    type: DataTypes.STRING,
       allowNull: false
-    },
+  },
     status: {
       type: DataTypes.INTEGER(11),
       allowNull: false,
-      defaultValue: '0'
+      defaultValue: "0"
     },
     properties: {
       type: DataTypes.TEXT,

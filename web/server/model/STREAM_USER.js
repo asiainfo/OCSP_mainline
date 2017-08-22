@@ -1,5 +1,5 @@
 /* jshint indent: 2 */
-
+"use strict";
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('STREAM_USER', {
     id: {
@@ -14,7 +14,12 @@ module.exports = function(sequelize, DataTypes) {
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      defaultValue: ""
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     createdAt: false,

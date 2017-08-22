@@ -16,12 +16,14 @@ function print_usage(){
   echo "  start                                 run the stream application"
   echo "  stop                                  shutdown the stream application"
   echo "  restart                               restart the stream application"
+  echo "  admin                                 system operation tool"
   echo "  version                               print the version"
 }
 
 function setupStream(){
     cp -f ${STREAM_HOME}/conf/common.xml.template ${STREAM_HOME}/conf/common.xml
     cp -f ${STREAM_HOME}/web/server/config.js.template ${STREAM_HOME}/web/server/config.js
+    cp -f ${STREAM_HOME}/web/server/lib/shiro.ini.template ${STREAM_HOME}/web/server/lib/shiro.ini
     echo "Please input mysql address(<ip>:<port>): "
     read MYSQL_ADDR
     echo "Please input mysql database name: "
@@ -30,6 +32,24 @@ function setupStream(){
     read MYSQL_UNAME
     echo "Please input mysql password: "
     read MYSQL_PWD
+    echo "Enable ldap authentication [y/n] (y)?"
+    read ENABLE_LDAP
+    if [ "$ENABLE_LDAP"x = "n"x ] || [ "$ENABLE_LDAP"x = "N"x ]; then
+        SECURITY_MANAGER_REALMS="\$jpamRealm,\$jdbcRealm"
+        sed -i -e "/@LDAP_ADDR@/d" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i -e "/@USER_DN_TEMPLATE@/d" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i "s/@SECURITY_MANAGER_REALMS@/${SECURITY_MANAGER_REALMS}/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+    else
+        echo "Please input ldap address(<ip>:<port>): "
+        read LDAP_ADDR
+        echo "Please input ldap user DN template(e.g., uid={0},ou=People,dc=asiainfo,dc=com): "
+        read USER_DN_TEMPLATE
+        SECURITY_MANAGER_REALMS="\$ldapRealm,\$jpamRealm,\$jdbcRealm"
+
+        sed -i "s/@LDAP_ADDR@/${LDAP_ADDR}/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i "s/@USER_DN_TEMPLATE@/${USER_DN_TEMPLATE}/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i "s/@SECURITY_MANAGER_REALMS@/${SECURITY_MANAGER_REALMS}/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+    fi
     echo "Please input Yarn Resource Manager address(<ip>:<port>): "
     read RM_ADDR
     echo "Please input Codis Dashboard address(<ip>:<port>): "
@@ -46,25 +66,31 @@ function setupStream(){
         sed -i "s/@MYSQL_ADDR@/$MYSQL_ADDR/g" ${STREAM_HOME}/web/server/config.js
         sed -i "s/@RM_ADDR@/$RM_ADDR/g" ${STREAM_HOME}/web/server/config.js
         sed -i "s/@CODIS_ADDR@/$CODIS_ADDR/g" ${STREAM_HOME}/web/server/config.js
+
+        sed -i "s/@MYSQL_DATABASE@/${MYSQL_DATABASE}/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i "s/@MYSQL_UNAME@/$MYSQL_UNAME/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i "s/@MYSQL_PWD@/$MYSQL_PWD/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+        sed -i "s/@MYSQL_ADDR@/$MYSQL_ADDR/g" ${STREAM_HOME}/web/server/lib/shiro.ini
+    fi
+
+
+    if [ ! -f "/etc/pam.d/net-sf-jpam" ]; then
+       sudo -u root cp ${STREAM_HOME}/conf/net-sf-jpam /etc/pam.d
+    else
+       error "Can not overwrite /etc/pam.d/net-sf-jpam since it exists."
     fi
 
     success "Setup successfully."
-#    if [ $? -eq 0 ]; then
-#        echo "Init Mysql database"
-#        mysql -u"${MYSQL_UNAME}" -p"${MYSQL_PWD}" -D"${MYSQL_DATABASE}"<${STREAM_HOME}/bin/create_tables.sql
-#    else
-#        error "Set config file error"
-#    fi
-#    if [ $? -eq 0 ]; then
-#        success "Setup successfully."
-#    else
-#        error "Setup failed"
-#        error "Please rerun stream setup"
-#    fi
 }
 
 function startStream(){
-    if [ ! -d "${STREAM_HOME}/logs/stream_pid.log" ]; then
+    echo "ocsppassword"| sudo -S -v
+    if [ $? -ne 0 ]; then
+        error "The current user is not in the sudoers file or need NOPASSWD setting in the sudoers file"
+        exit 2
+    fi
+
+    if [ ! -f "${STREAM_HOME}/logs/stream_pid.log" ]; then
        touch "${STREAM_HOME}/logs/stream_pid.log"
     fi
 
@@ -74,7 +100,8 @@ function startStream(){
 
         CLASSPATH=`getClassPath`
 
-        nohup java -cp ${CLASSPATH} com.asiainfo.ocdp.stream.manager.MainFrameManager &>> ${STREAM_HOME}/logs/MainFrameManager.log&
+        cd ${STREAM_HOME}/conf
+        nohup java -cp ${CLASSPATH} -Dlog4j.configuration=file:${STREAM_HOME}/conf/log4j.properties com.asiainfo.ocdp.stream.manager.MainFrameManager &>> ${STREAM_HOME}/logs/MainFrameManager.out&
         pid=`echo $!`
 
         sleep 1
@@ -83,6 +110,7 @@ function startStream(){
 
         if [ $? -eq 0 ]; then
             echo ${pid} > ${STREAM_HOME}/logs/stream_pid.log
+            chmod 777 ${STREAM_HOME}/logs/MainFrameManager.log
             success "Start the server successfully."
             success "Please check log ${STREAM_HOME}/logs/MainFrameManager.log for details."
         else
@@ -102,15 +130,23 @@ function stopStream(){
          out "Stopping the server..."
          for id in ${proc_id[*]}
          do
-           kill ${id}
+           ps -ef|grep ${id}|grep -v grep
 
            if [ $? -eq 0 ];then
-                success "Stop the server successfully."
-                echo > ${STREAM_HOME}/logs/stream_pid.log
+               kill ${id}
+
+               if [ $? -eq 0 ];then
+                    success "Stop the server successfully."
+                    echo > ${STREAM_HOME}/logs/stream_pid.log
+               else
+                    error "Stop the server failed! "
+                    error "Please check log ${STREAM_HOME}/logs/MainFrameManager.log for error messages."
+               fi
            else
-                error "Stop the server failed! "
-                error "Please check log ${STREAM_HOME}/logs/MainFrameManager.log for error messages."
+                out "The server which process id ${id} is not running ! "
+                echo > ${STREAM_HOME}/logs/stream_pid.log
            fi
+
          done
     fi
 }
@@ -126,6 +162,12 @@ function getClassPath(){
     echo ${CLASSPATH}
 }
 
+function sys_admin(){
+    CLASSPATH=`getClassPath`
+
+    java -cp ${CLASSPATH} com.asiainfo.ocdp.stream.admin.AdminCLI $*
+}
+
 function print_version(){
     CLASSPATH=`getClassPath`
 
@@ -134,7 +176,7 @@ function print_version(){
 
 if [ $# -eq 0 ]; then
     print_usage;
-elif [ $# -eq 1 ]; then
+else
     case $1 in
     setup)
         setupStream;;
@@ -151,6 +193,8 @@ elif [ $# -eq 1 ]; then
     restart)
         stopStream
         startStream;;
+    admin)
+        sys_admin $*;;
     version)
         print_version;;
     --help|-help|-h)
@@ -159,8 +203,6 @@ elif [ $# -eq 1 ]; then
         error "Invalid argument, please refer to: "
         print_usage;;
     esac
-else
-    print_usage
 fi
 
 exit 0;

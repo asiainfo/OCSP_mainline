@@ -1,5 +1,5 @@
 /* jshint indent: 2 */
-
+"use strict";
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('STREAM_DATASOURCE', {
     id: {
@@ -15,6 +15,11 @@ module.exports = function(sequelize, DataTypes) {
     type: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    status: {
+      type: DataTypes.INTEGER(11),
+      allowNull: false,
+      defaultValue: "0"
     },
     description: {
       type: DataTypes.STRING,

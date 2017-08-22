@@ -1,73 +1,84 @@
-# 橘云流处理平台(OCSP)
+# OCSP
 
-### 介绍
+### 中文介绍
 
-OCSP是基于Spark streaming的处理流数据低延迟、可高度扩展的，满足海量且多样化数据源处理的高性能平台。OCSP支持多种流数据输入，例如：Socket，文件，Kafka等。可以满足多种场景不同数据源的需求。OCSP支持将数据处理结果以多种方式输出，例如Kafka，Redis，HDFS等。OCSP还具有高实时性、高扩展性、高易用性等特点。能够方便用户快速搭建、使用流处理平台。
+* [中文介绍](https://github.com/OCSP/OCSP_mainline/wiki/OCSP%E4%B8%AD%E6%96%87%E4%BB%8B%E7%BB%8D)
 
-### 功能
+### Introduction
 
-* 主要功能
+OCSP is a high performance stream processing system which is based on Spark. It supports multiple types of data input, such as Socket, files, Kafka etc. Besides, it can output the result as different types. Currently, OCSP supports output type of Kafka, Redis, HDFS etc. User does not need to know the detail of RDDs. Instead, a api function needs to be overwrittern to implement the logic.
+
+User can use OCSP to build his streaming platform easily and quickly.
+
+### Features
+
  
-| 主要功能       | 二级功能        |
+| Feature        |   Detailed feature       |
 | ------------- |:-------------:|
-| 事件处理       | 流数据读取      |
-|               | 数据预处理      |
-|               | 标签逻辑运算     |
-|               | 数据缓存        |
-|               | 数据订阅        |
-|               | 事件输出        |
-| 配置管理       | 接口适配规则管理  |
-|               | 预处理规则管理  |
-|               | 标签管理    |
-|               | 处理规则管理   |
-|               | 订阅管理   |
-|               | 系统参数管理   |
-| 监控管理       | 时间流全景展示  |
-|               | 服务状态监测  |
-|               | 服务启动/停止操作  |
+| Event processing       | Data reading      |
+|               | Data pre-processing      |
+|               | Label enhancement     |
+|               | Cache        |
+|               | Event subscription        |
+|               | Event output      |
+| Configuration | Input configuration  |
+|               | Pre-processing configuration  |
+|               | label configuration   |
+|               | Processing  configuration |
+|               | Subscription configuration |
+|               | System  configuration  |
+| Monitor       | Metrics view  |
+|               | Status view  |
+|               | Service Start/Stop  |
 
      
 
-* 架构 [详细架构](https://github.com/OCSP/OCSP_mainline/wiki/OCSP%E6%9E%B6%E6%9E%84%E8%AF%B4%E6%98%8E%E6%96%87%E6%A1%A3)
+* Framework [Details](https://github.com/OCSP/OCSP_mainline/wiki/OCSP-Architecture)
 
-   OCSP由数据接入层，流平台核心层，配置管理层，基础组件层等四部分组成。如图所示：
+   OCSP consists of four components: Data input, Core processing, Configuration, Basic components as below:
 
    ![OCSP架构图](http://ohpsj3ec3.bkt.clouddn.com/overview.png?imageView/2/w/500/q/100)
    
-* 前台界面
+* UI
  
-     * 作业状态界面
+     * Stream status view
  
-      ![前台页面展示1](http://ohpsj3ec3.bkt.clouddn.com/web1.png?imageView/2/w/500/q/100)
+         ![前台页面展示1](http://ohpsj3ec3.bkt.clouddn.com/web1.png?imageView/2/w/500/q/100)
 
-     * 作业配置界面
+     * Stream configuration view
      
-      ![前台页面展示2](http://ohpsj3ec3.bkt.clouddn.com/web2.png?imageView/2/w/500/q/100)
+         ![前台页面展示2](http://ohpsj3ec3.bkt.clouddn.com/web2.png?imageView/2/w/500/q/100)
 
-     * 作业创建界面
+     * Stream creation view
   
          ![前台页面展示3](http://ohpsj3ec3.bkt.clouddn.com/web3.png?imageView/2/w/500/q/100)
 
 
-### 安装部署方法
+### Build & Installation
 
-* [编译方法](https://github.com/OCSP/OCSP_mainline/wiki/编译OCSP源代码方法)
+* [Build](https://github.com/OCSP/OCSP_mainline/wiki/Compile-Source-Code)
 
-* [安装部署](https://github.com/OCSP/OCSP_mainline/wiki/安装部署)
+* [Installation](https://github.com/OCSP/OCSP_mainline/wiki/OCSP-Setup)
 
-* [Codis部署](https://github.com/OCSP/OCSP_mainline/wiki/Codis-%E9%83%A8%E7%BD%B2)
+* [Codis installation](https://github.com/CodisLabs/codis/blob/release3.2/doc/tutorial_en.md)
 
-* [YARN标签设置](https://github.com/OCSP/OCSP_mainline/wiki/Yarn-Node-Label-%E9%85%8D%E7%BD%AE)
+* [YARN label configuration](https://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.4.2/bk_yarn_resource_mgt/content/configuring_node_labels.html)
 
-### 使用及调优
+### How to use
 
-* [使用文档](https://github.com/OCSP/OCSP_mainline/wiki/使用文档)
-* [自定义标签开发](https://github.com/OCSP/OCSP_mainline/wiki/%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A0%87%E7%AD%BE)
-* [OCSP调优](https://github.com/OCSP/OCSP_mainline/wiki/OCSP-%E8%B0%83%E4%BC%98)
+* [Guideline](https://github.com/OCSP/OCSP_mainline/wiki/2.1-\(Medivh\)-OCSP-User-Guide)
+* [Label development](https://github.com/OCSP/OCSP_mainline/wiki/Customize-Label)
+* [Performance optimization](https://github.com/OCSP/OCSP_mainline/wiki/Tuning-OCSP)
 
 ### Milestone
 
 *   2016 Nov. [V2.0.0](https://github.com/OCSP/OCSP_mainline/releases/tag/2.0.0) 
+*   2017 Jan 13. [V2.0.1](https://github.com/OCSP/OCSP_mainline/releases/tag/2.0.1)
+*   2017 May 4.  [V2.1](https://github.com/OCSP/OCSP_mainline/releases/tag/2.1.0)
+
+### Downloads
+*   V2.0.1 RPM builds based on Spark1.6.x [v2.0.1](https://pan.baidu.com/s/1gfn6hzX)
+*   V2.1 RPM builds based on Spark1.6.x [v2.1](https://pan.baidu.com/s/1pKH5qA3)
 
 ### FAQ
-* [常见问题](https://github.com/OCSP/OCSP_mainline/wiki/常见问题)
+* [FAQ](https://github.com/OCSP/OCSP_mainline/wiki/FAQ)

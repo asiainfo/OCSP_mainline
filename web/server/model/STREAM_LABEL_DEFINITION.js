@@ -1,5 +1,5 @@
 /* jshint indent: 2 */
-
+"use strict";
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('STREAM_LABEL_DEFINITION', {
     id: {
@@ -18,6 +18,10 @@ module.exports = function(sequelize, DataTypes) {
     },
     properties: {
       type: DataTypes.TEXT,
+      allowNull: true
+    },
+    owner: {
+      type: DataTypes.STRING,
       allowNull: true
     }
   }, {

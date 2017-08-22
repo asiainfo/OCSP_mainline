@@ -1,7 +1,10 @@
+"use strict";
 // sequelize config
-var Sequelize = require('sequelize');
-var config = require('./config');
-var env = config.env || 'dev';
-var sequelize = new Sequelize(config[env].mysql);
+let Sequelize = require('sequelize');
+let config = require('./config');
+let env = config.env || 'dev';
+let sequelize = new Sequelize(config[env].mysql, {
+  logging: false
+});
 
 module.exports = sequelize;

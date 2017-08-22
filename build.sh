@@ -3,11 +3,23 @@
 set -e
 
 HOME_PATH=$(cd `dirname $0`; pwd)
-version=2.0.1
 
 cd ${HOME_PATH}
-
-mvn clean package -Dmaven.test.skip=true
+version=`awk '/<ocsp.version>[^<]+<\/ocsp.version>/{gsub(/<ocsp.version>|<\/ocsp.version>/,"",$1);print $1;exit;}' pom.xml`
+spark_version=1.6
+if [[ -z ${1} ]];then
+    echo "Build based on spark 1.6"
+    mvn clean package -Dmaven.test.skip=true -Pspark-1.6
+else
+    case ${1} in
+    1.6|2.1)
+        echo "Build based on spark ${1}"
+        mvn clean package -Dmaven.test.skip=true -Pspark-${1};;
+    *)
+        echo "Invalid argument, only support to spark version 1.6 or 2.1"
+        exit 2
+    esac
+fi
 
 if [ $? -ne 0 ]; then
    echo "Build failed..."
@@ -17,26 +29,31 @@ fi
 
 rm -fr build
 
-mkdir -p build/OCDP_Stream/lib
-mkdir -p build/OCDP_Stream/logs
-mkdir -p build/OCDP_Stream/web
+mkdir -p build/OCSP/lib/native
+mkdir -p build/OCSP/logs
+mkdir -p build/OCSP/web
 
-cp -r bin build/OCDP_Stream
-cp -r conf build/OCDP_Stream
+cp -r bin build/OCSP
+cp -r conf build/OCSP
 
-cp core/target/core-${version}.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/jedis-*.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/jodis-*.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/commons-pool2-*.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/mysql-connector-java-*.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/spark-streaming-kafka-assembly_*.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/scala-library-*.jar build/OCDP_Stream/lib
-cp core/target/core-${version}-dist/lib/spark-assembly-1.6.0.2.4.0.0-169-hadoop2.7.1.2.4.0.0-169*.jar build/OCDP_Stream/lib
+cp thirdparty/Jpam-1.1/net-sf-jpam build/OCSP/conf
+cp thirdparty/JPam-1.1/libjpam.so build/OCSP/lib/native
 
-tar -xzf web/target/web-2.0.1-bundle.tar.gz -C build/OCDP_Stream/web
+cp core/target/ocsp-core_${spark_version}-${version}.jar build/OCSP/lib
+cp core/target/ocsp-core_${spark_version}-${version}-dist/lib/*.jar build/OCSP/lib
+
+if [ -z ${1} ]||[ "1.6" == "${1}" ]; then
+    cp lib/*.jar build/OCSP/lib
+fi
+
+
+tar -xzf web/target/web-${version}-bundle.tar.gz -C build/OCSP/web
+
+mkdir build/OCSP/web/uploads
+mkdir build/OCSP/web/tmp
 
 cd build
 
-tar -czf OCDP_Stream_${version}.tar.gz OCDP_Stream
+tar -czf OCSP_${version}.tar.gz OCSP
 
 exit 0

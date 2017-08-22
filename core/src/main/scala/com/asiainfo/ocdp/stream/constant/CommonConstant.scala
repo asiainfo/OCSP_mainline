@@ -14,4 +14,8 @@ object CommonConstant {
   val appLogFile = new File(baseDir, "../logs/Stream_APP").getCanonicalPath
   val appJarsDir = new File(baseDir).getCanonicalPath
   val KafakPartitionOffsetFile = new File(baseDir, "../conf/offset.xml").getCanonicalPath()
+  val MulTopic = true
+  val ocspLogPath = new File(baseDir, "../logs").getCanonicalPath
+
+  val ocspConfPath = new File(baseDir, "../conf").getCanonicalPath
 }

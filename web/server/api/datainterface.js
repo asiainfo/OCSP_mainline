@@ -1,16 +1,18 @@
-var express = require('express');
-var sequelize = require('../sequelize');
-var Sequelize = require('sequelize');
-var DataInterface = require('../model/STREAM_DATAINTERFACE')(sequelize, Sequelize);
-var config = require('../config');
-var trans = config[config.trans || 'zh'];
+"use strict";
+let express = require('express');
+let sequelize = require('../sequelize');
+let Sequelize = require('sequelize');
+let DataInterface = require('../model/STREAM_DATAINTERFACE')(sequelize, Sequelize);
+let config = require('../config');
+let trans = config[config.trans || 'zh'];
 
-var router = express.Router();
+let router = express.Router();
 
 router.get('/', function(req, res){
   DataInterface.findAll().then(function (datainterface){
     res.send(datainterface);
-  }, function(){
+  }).catch(function(err){
+    console.error(err);
     res.status(500).send(trans.databaseError);
   });
 });
@@ -22,7 +24,8 @@ router.get('/exist/:name', function(req, res){
     }else{
       res.send({name: req.params.name, find: false});
     }
-  }, function(){
+  }).catch(function(err){
+    console.error(err);
     res.status(500).send(trans.databaseError);
   });
 });
@@ -34,9 +37,10 @@ router.get('/output', function(req, res){
     }
   }).then(function (datainterface){
     res.send(datainterface);
-  }, function(){
+  }).catch(function(err){
+    console.error(err);
     res.status(500).send(trans.databaseError);
-  })
+  });
 });
 
 router.get('/:id', function(req, res){
@@ -46,9 +50,10 @@ router.get('/:id', function(req, res){
     }
   }).then(function (datainterface){
     res.send(datainterface);
-  }, function(){
+  }).catch(function(err){
+    console.error(err);
     res.status(500).send(trans.databaseError);
-  })
+  });
 });
 
 module.exports = router;

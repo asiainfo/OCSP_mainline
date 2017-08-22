@@ -1,14 +1,14 @@
 %global         _prefix /usr
 
-Name:           OCDP_Stream
-Version:        2.0
-Release:        1
+Name:           OCSP
+Version:        2.1
+Release:        0
 Summary:        OCSP from asiainfo.com
 
 Group:          Applications/Productivity
 License:        GPL
 URL:            https://github.com/OCSP/OCSP_mainline
-Source:         OCDP_Stream_2.0.1.tar.gz
+Source:         OCSP_2.1.0.tar.gz
 
 
 %description
@@ -19,8 +19,8 @@ OCSP from ASIAINFO
 %install
 rm -rf %{buildroot}
 %{__install} -d %{buildroot}%{_prefix}
-tar -xzf %{_sourcedir}/OCDP_Stream_2.0.1.tar.gz -C %{buildroot}%{_prefix}
-mv %{buildroot}%{_prefix}/OCDP_Stream %{buildroot}%{_prefix}/ocsp
+tar -xzf %{_sourcedir}/OCSP_2.1.0.tar.gz -C %{buildroot}%{_prefix}
+mv %{buildroot}%{_prefix}/OCSP %{buildroot}%{_prefix}/ocsp
 
 %post
 
@@ -42,6 +42,7 @@ echo "%{_prefix}/ocsp had been removed"
 %{_prefix}/ocsp/logs
 %{_prefix}/ocsp/web
 %defattr (755,root,root)
+/*
 %doc
 
 %changelog

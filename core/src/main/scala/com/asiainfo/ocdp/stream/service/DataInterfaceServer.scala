@@ -39,11 +39,13 @@ class DataInterfaceServer extends Logging with Serializable {
       val dsconf = getDataSourceInfoById(interface.get("dsid").get)
       conf.setDsConf(dsconf)
 
-      val propsJsonStr = interface.get("properties").getOrElse("").replace(" ", "")
-      conf.setBaseSchema(Json4sUtils.jsonStr2BaseStructType(propsJsonStr, "fields"))
-      conf.setBaseItemsSize((Json4sUtils.jsonStr2ArrMap(propsJsonStr, "fields")).size)
+      //val propsJsonStr = interface.get("properties").getOrElse("").replace(" ", "")
+      val propsJsonStr = interface.get("properties").getOrElse("")
+      conf.setCommonSchema(Json4sUtils.jsonStr2BaseStructType(propsJsonStr, "fields"))
+//      conf.setBaseSchema(Json4sUtils.jsonStr2BaseStructType(propsJsonStr, "sources"))
+//      conf.setBaseItemsSize((Json4sUtils.jsonStr2ArrMap(propsJsonStr, "fields")).size)
       conf.setAllItemsSchema(Json4sUtils.jsonStr2UdfStructType(propsJsonStr, "fields", "userFields"))
-
+      conf.setDataSchemas(Json4sUtils.jsonStr2DataSchemas(propsJsonStr, "sources", conf.getCommonSchema))
       val propsMap = Json4sUtils.jsonStr2ArrMap(propsJsonStr, "props")
       propsMap.foreach(kvMap => {
         if (!kvMap.isEmpty) conf.set(kvMap.get("pname").get, kvMap.get("pvalue").get)
@@ -89,19 +91,44 @@ class DataInterfaceServer extends Logging with Serializable {
       conf.setPlabelId(x.get("p_label_id").get)
 
       val propsJsonStr = x.get("properties").getOrElse(null)
-      if (propsJsonStr != null) {
-        val propsArrMap = Json4sUtils.jsonStr2ArrMap(propsJsonStr, "props")
-        propsArrMap.foreach(kvMap => {
-          if (!kvMap.isEmpty) conf.set(kvMap.get("pname").get, kvMap.get("pvalue").get)
-        })
+      if (StringUtils.isNotEmpty(propsJsonStr)) {
+        if (!Json4sUtils.isValidJsonStr(propsJsonStr)){
+          throw new Exception(s"${propsJsonStr} is invalid json format.")
+        }
 
-        val fieldsArrMap = Json4sUtils.jsonStr2ArrMap(propsJsonStr, "labelItems")
-        val fieldsList = ArrayBuffer[String]()
-        fieldsArrMap.foreach(kvMap => {
-          if (!kvMap.isEmpty) fieldsList += kvMap.get("pvalue").get
+        val labelConfMap = Json4sUtils.jsonStr2MapList(propsJsonStr)
+
+        labelConfMap.foreach( confObject => {
+
+          if ("props".equals(confObject._1)){
+            confObject._2.foreach(props => {
+              if (!props.isEmpty){
+                conf.set(props.get("pname").get, props.get("pvalue").get)
+              }
+            })
+          }
+          else if ("labelItems".equals(confObject._1)){
+            val fieldsList = ArrayBuffer[String]()
+            confObject._2.foreach(items => {
+              if (!items.isEmpty){
+                fieldsList += items.get("pvalue").get
+              }
+            })
+
+            //打标签字段
+            conf.setFields(fieldsList.toList)
+          }
+          else {
+            logWarning(s"${confObject._1} is invalid property.")
+          }
         })
-        //打标签字段
-        conf.setFields(fieldsList.toList)
+      }
+
+      if (conf.getFields == null || conf.getFields.isEmpty){
+        logWarning("Can not find any label items")
+      }
+      else{
+        logInfo(s"The fields of label ${conf.getId} are ${conf.getFields}")
       }
 
       val label: Label = Class.forName(conf.getClass_name).newInstance().asInstanceOf[Label]
@@ -198,22 +225,9 @@ class DataInterfaceServer extends Logging with Serializable {
       eventarr += event
     })
 
-    //根据event的依赖关系排序
-    val eventIDMap = eventarr.map(event => (event.conf.id, event)).toMap
+    logInfo("All events are : " + eventarr.toList)
 
-    val resultArray = ArrayBuffer[String]()
-
-    eventarr.foreach(event => eventSort(event.conf.id, resultArray, eventIDMap))
-
-    val result = ArrayBuffer[Event]()
-
-    resultArray.foreach(id => {
-      result += eventIDMap(id)
-    })
-
-    logInfo("All events in order: " + result.toList)
-
-    result.toArray
+    eventarr.toArray
   }
 
   def getSubjectInfoById(id: String): SubjectConf = {
